@@ -10,7 +10,9 @@ import multiprocessing as mp
 
 
 def unwrap_sum_uv(args, **kwargs):
+    """Wrapper function around sum_uv to enable parallel procressing."""
     return UVGridder.sum_uv(*args, **kwargs)
+
 
 class UVGridder(object):
     """Base uvgridder object."""
@@ -298,8 +300,7 @@ class UVGridder(object):
         uvf_stack = pool.map(unwrap_sum_uv, zip([self]*len(keys), keys))
         self.uvf_cube = np.sum(uvf_stack, axis=0)
         del uvf_stack
-        # for uv_key in self.uvbins.keys():
-            # self.sum_uv(uv_key)
+
         beam_array = self.get_uv_beam()
         # if only one beam was given, use that beam for all freqs
         if np.shape(beam_array)[0] < self.freqs.size:
