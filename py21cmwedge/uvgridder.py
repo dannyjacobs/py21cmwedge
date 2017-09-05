@@ -315,6 +315,7 @@ class UVGridder(object):
 
         Perform All calculations:
         Convert uvw_array to dict (uvw_to_dict())
+        Simulate Observations for Rotation Synthesis
         Grid uvw to plane (grid_uvw())
         refresh_all : boolean, if true, recalculate the uvbins
         """
