@@ -6,7 +6,11 @@ from scipy.ndimage import filters
 from scipy.signal import fftconvolve
 from py21cmwedge import cosmo, dft
 import healpy as hp
+import multiprocessing as mp
 
+
+def unwrap_sum_uv(args, **kwargs):
+    return UVGridder.sum_uv(*args, **kwargs)
 
 class UVGridder(object):
     """Base uvgridder object."""
@@ -286,8 +290,12 @@ class UVGridder(object):
         u, v = np.array(map(float, uv_key.split(',')))
         u /= self.wavelength
         v /= self.wavelength
-        _beam = self.beamgridder(u=u, v=v)
-        self.uvf_cube += nbls * _beam
+        _beam = np.zeros((self.freqs.size, self.uv_size, self.uv_size),
+                         dtype=np.complex)
+        for _fq in xrange(self.freqs.size):
+            # Create interpolation weights based on grid size and sampling
+            _beam[_fq] += self.uv_weights(u[_fq], v[_fq])
+        return nbls * _beam
 
     def grid_uvw(self):
         """Create UV coverage from object data."""
@@ -296,8 +304,14 @@ class UVGridder(object):
                                     / self.uv_delta).max()*1.1) * 2 + 5
         self.uvf_cube = np.zeros(
             (self.freqs.size, self.uv_size, self.uv_size), dtype=np.complex)
-        for uv_key in self.uvbins.keys():
-            self.sum_uv(uv_key)
+
+        pool = mp.Pool(processes=mp.cpu_count())
+        keys = self.uvbins.keys()
+        self.uvf_stack = pool.map(unwrap_sum_uv, zip([self]*len(keys), keys))
+        self.uvf_stack = np.array(self.uvf_stack)
+        self.uvf_cube = np.sum(self.uvf_stack, axis=0)
+        # for uv_key in self.uvbins.keys():
+            # self.sum_uv(uv_key)
         beam_array = self.get_uv_beam()
         # if only one beam was given, use that beam for all freqs
         if np.shape(beam_array)[0] < self.freqs.size:
