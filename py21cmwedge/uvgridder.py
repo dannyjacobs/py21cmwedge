@@ -295,9 +295,9 @@ class UVGridder(object):
 
         pool = mp.Pool(processes=mp.cpu_count())
         keys = self.uvbins.keys()
-        self.uvf_stack = pool.map(unwrap_sum_uv, zip([self]*len(keys), keys))
-        self.uvf_stack = np.array(self.uvf_stack)
-        self.uvf_cube = np.sum(self.uvf_stack, axis=0)
+        uvf_stack = pool.map(unwrap_sum_uv, zip([self]*len(keys), keys))
+        self.uvf_cube = np.sum(uvf_stack, axis=0)
+        del uvf_stack
         # for uv_key in self.uvbins.keys():
             # self.sum_uv(uv_key)
         beam_array = self.get_uv_beam()
