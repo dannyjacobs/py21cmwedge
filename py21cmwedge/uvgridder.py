@@ -39,6 +39,7 @@ class UVGridder(object):
         self.latitude = 0  # set default array at the equator
         self.ra = None
         self.n_obs = 1  # Default to a single snapshot
+        self.n_procs = 4
 
     def set_uv_delta(self, delta):
         """Set grid sampling size."""
@@ -295,7 +296,7 @@ class UVGridder(object):
         self.uvf_cube = np.zeros(
             (self.freqs.size, self.uv_size, self.uv_size), dtype=np.complex)
 
-        pool = mp.Pool(processes=mp.cpu_count())
+        pool = mp.Pool(processes=self.n_procs)
         keys = self.uvbins.keys()
         uvf_stack = pool.map(unwrap_sum_uv, zip([self]*len(keys), keys))
         self.uvf_cube = np.sum(uvf_stack, axis=0)
